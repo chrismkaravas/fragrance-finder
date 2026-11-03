@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fragrance Finder</title>
+<meta name="description" content="Find colognes and perfumes that match your tastes with a short quiz.">
+<style>
+:root {
+  --bg: #faf6f0;
+  --surface: #ffffff;
+  --text: #2b2320;
+  --muted: #6f625a;
+  --accent: #8a4b2d;
+  --accent-text: #ffffff;
+  --border: #e4d9cd;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: Georgia, "Times New Roman", serif;
+  line-height: 1.6;
+}
+main { max-width: 680px; margin: 0 auto; padding: 48px 16px 64px; }
+h1 { font-size: 2.5rem; line-height: 1.15; margin: 0 0 12px; }
+h2 { font-size: 1.4rem; margin: 0 0 16px; }
+p { margin: 0 0 16px; }
+.brand { color: var(--accent); font-weight: bold; letter-spacing: 0.04em; margin-bottom: 32px; }
+.lead { color: var(--muted); font-size: 1.15rem; }
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 24px;
+  margin-top: 24px;
+}
+.options { display: grid; gap: 10px; }
+button { font: inherit; cursor: pointer; }
+.option {
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px 16px;
+  text-align: left;
+}
+.option:hover, .option:focus-visible { border-color: var(--accent); }
+.primary {
+  background: var(--accent);
+  color: var(--accent-text);
+  border: 0;
+  border-radius: 8px;
+  padding: 12px 20px;
+}
+.step { color: var(--muted); font-size: 0.9rem; margin-bottom: 8px; }
+.result { border-top: 1px solid var(--border); padding: 16px 0; }
+.result:first-of-type { border-top: 0; padding-top: 0; }
+.result h3 { margin: 0; font-size: 1.1rem; }
+.notes { color: var(--muted); margin: 4px 0 0; }
+footer { color: var(--muted); font-size: 0.9rem; margin-top: 40px; }
+</style>
+</head>
+<body>
+<main>
+  <div class="brand">Fragrance Finder</div>
+  <h1>Find a scent that fits you.</h1>
+  <p class="lead">Answer three quick questions and get colognes and perfumes matched to what you like.</p>
+  <section class="card" id="quiz" aria-live="polite"></section>
+  <footer>Built by Chris Karavas for an entrepreneurship class project.</footer>
+</main>
+<script>
+const questions = [
+  { key: "family", text: "Which scents do you like most?", options: [
+    ["fresh", "Fresh and clean"], ["citrus", "Bright and citrusy"], ["floral", "Soft and floral"],
+    ["woody", "Warm and woody"], ["sweet", "Sweet and rich"]
+  ]},
+  { key: "mood", text: "How do you want to feel wearing it?", options: [
+    ["confident", "Confident"], ["relaxed", "Relaxed"], ["romantic", "Romantic"], ["elegant", "Elegant"]
+  ]},
+  { key: "occasion", text: "When will you wear it most?", options: [
+    ["everyday", "Every day"], ["work", "At work"], ["evening", "Evenings out"], ["special", "Special occasions"]
+  ]}
+];
+
+const fragrances = [
+  { name: "Sauvage", brand: "Dior", notes: "bergamot, pepper, ambroxan", family: "fresh", mood: "confident", occasion: "everyday" },
+  { name: "Acqua di Giò", brand: "Giorgio Armani", notes: "marine notes, citrus, jasmine", family: "fresh", mood: "relaxed", occasion: "work" },
+  { name: "Lime Basil & Mandarin", brand: "Jo Malone London", notes: "lime, basil, mandarin", family: "citrus", mood: "relaxed", occasion: "everyday" },
+  { name: "Terre d'Hermès", brand: "Hermès", notes: "orange, flint, vetiver", family: "citrus", mood: "elegant", occasion: "work" },
+  { name: "J'adore", brand: "Dior", notes: "ylang-ylang, rose, jasmine", family: "floral", mood: "elegant", occasion: "special" },
+  { name: "N°5", brand: "Chanel", notes: "aldehydes, rose, jasmine", family: "floral", mood: "romantic", occasion: "evening" },
+  { name: "Bleu de Chanel", brand: "Chanel", notes: "citrus, incense, cedar", family: "woody", mood: "confident", occasion: "work" },
+  { name: "Oud Wood", brand: "Tom Ford", notes: "oud, sandalwood, vanilla", family: "woody", mood: "elegant", occasion: "evening" },
+  { name: "By the Fireplace", brand: "Maison Margiela", notes: "chestnut, vanilla, smoke", family: "woody", mood: "relaxed", occasion: "evening" },
+  { name: "Black Opium", brand: "Yves Saint Laurent", notes: "coffee, vanilla, white flowers", family: "sweet", mood: "confident", occasion: "evening" },
+  { name: "Flowerbomb", brand: "Viktor&Rolf", notes: "jasmine, rose, patchouli", family: "sweet", mood: "romantic", occasion: "special" },
+  { name: "Eros", brand: "Versace", notes: "mint, tonka bean, vanilla", family: "sweet", mood: "romantic", occasion: "evening" }
+];
+
+const quiz = document.getElementById("quiz");
+let answers = {};
+let step = 0;
+
+function element(tag, className, text) {
+  const node = document.createElement(tag);
+  if (className) node.className = className;
+  if (text) node.textContent = text;
+  return node;
+}
+
+function showStart() {
+  quiz.replaceChildren(element("h2", "", "Ready to start?"));
+  const start = element("button", "primary", "Take the quiz");
+  start.addEventListener("click", () => { answers = {}; step = 0; showQuestion(); });
+  quiz.append(start);
+}
+
+function showQuestion() {
+  const question = questions[step];
+  const options = element("div", "options");
+  question.options.forEach(([value, label]) => {
+    const option = element("button", "option", label);
+    option.addEventListener("click", () => {
+      answers[question.key] = value;
+      step += 1;
+      step < questions.length ? showQuestion() : showResults();
+    });
+    options.append(option);
+  });
+  quiz.replaceChildren(
+    element("div", "step", `Question ${step + 1} of ${questions.length}`),
+    element("h2", "", question.text),
+    options
+  );
+}
+
+function showResults() {
+  // The scent family counts most, so results stay close to the first answer.
+  const score = f => (f.family === answers.family ? 3 : 0) + (f.mood === answers.mood ? 1 : 0) + (f.occasion === answers.occasion ? 1 : 0);
+  const matches = [...fragrances].sort((a, b) => score(b) - score(a)).slice(0, 3);
+  quiz.replaceChildren(element("h2", "", "Your top matches"));
+  matches.forEach(match => {
+    const result = element("div", "result");
+    result.append(element("h3", "", `${match.name} by ${match.brand}`), element("p", "notes", `Notes: ${match.notes}`));
+    quiz.append(result);
+  });
+  const again = element("button", "primary", "Start over");
+  again.addEventListener("click", showStart);
+  quiz.append(again);
+}
+
+showStart();
+</script>
+</body>
+</html>
