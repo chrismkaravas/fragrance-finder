@@ -17,6 +17,8 @@ Price ranges are rough US retail for a full bottle, like "$80-$120". Only recomm
 const SCHEMA = {
   type: "object",
   properties: {
+    // Filled in first, so the model plans and checks its picks before writing them. Never shown to the user.
+    checks: { type: "string", description: "Scratch work: list 6-8 candidates, confirm each exists under that exact name and brand, check each price against the budget, then choose the final 4. Every pick below must be complete and final." },
     summary: { type: "string", description: "One or two sentences restating what they're looking for." },
     picks: {
       type: "array",
@@ -36,7 +38,7 @@ const SCHEMA = {
     },
     tip: { type: "string", description: "One practical tip, such as how to sample before buying." }
   },
-  required: ["summary", "picks", "tip"],
+  required: ["checks", "summary", "picks", "tip"],
   additionalProperties: false
 };
 
@@ -62,7 +64,8 @@ export default async function handler(req, res) {
       model: "claude-sonnet-5-5",
       max_tokens: 16000,
       system: SYSTEM,
-      output_config: { effort: "medium", format: { type: "json_schema", schema: SCHEMA } },
+      thinking: { type: "adaptive" },
+      output_config: { effort: "high", format: { type: "json_schema", schema: SCHEMA } },
       messages: [{ role: "user", content: request }]
     });
 
@@ -73,7 +76,8 @@ export default async function handler(req, res) {
     if (response.stop_reason === "max_tokens" || !text) {
       return res.status(502).json({ error: "The advisor's answer got cut off. Please try again." });
     }
-    return res.json(JSON.parse(text));
+    const { checks, ...answer } = JSON.parse(text);
+    return res.json(answer);
   } catch (error) {
     console.error(error);
     if (error instanceof Anthropic.RateLimitError) {
