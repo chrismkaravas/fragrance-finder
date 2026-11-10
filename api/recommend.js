@@ -8,9 +8,10 @@ const DAILY_LIMIT = 25; // per user, keeps API spending predictable
 
 const SYSTEM = `You are the scent advisor for Fragrance Finder, a website that helps people find colognes and perfumes they'll love.
 The person describes what they like, fragrances they already wear, who they're shopping for, or their budget.
-Recommend 4 real, currently sold fragrances that fit. Mix well-known designer picks with at least one niche or lesser-known option when it fits.
+Recommend 4 real, currently sold fragrances that fit. Where it fits their budget, include a niche or lesser-known option alongside well-known ones.
 For each pick, explain in one or two plain sentences why it matches what they said, using their own words where you can.
-If they mention a fragrance they love, include at least one cheaper alternative with a similar feel.
+Budget is a hard rule: if they name a price limit, or ask for something cheaper than a fragrance they mention, every pick must cost less than that. Good affordable houses include Zara, Montblanc, Nautica, Armaf, Lattafa, Rasasi and Al Haramain.
+If they mention a fragrance they love but don't ask for cheaper, include at least one cheaper alternative with a similar feel, and don't recommend the fragrance they already own.
 Price ranges are rough US retail for a full bottle, like "$80-$120". Never invent fragrances. If the request isn't about fragrance, set summary to a short friendly note asking them to describe scents they like, and return an empty picks list.`;
 
 const SCHEMA = {
