@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Fragrance Finder</title>
-<meta name="description" content="Find colognes and perfumes that match your tastes with a short quiz.">
+<meta name="description" content="Stop blind-buying perfume. Fragrance Finder matches you with colognes and perfumes you'll actually love.">
 <style>
 :root {
   --bg: #faf6f0;
@@ -23,21 +23,31 @@ body {
   font-family: Georgia, "Times New Roman", serif;
   line-height: 1.6;
 }
-main { max-width: 680px; margin: 0 auto; padding: 48px 16px 64px; }
-h1 { font-size: 2.5rem; line-height: 1.15; margin: 0 0 12px; }
-h2 { font-size: 1.4rem; margin: 0 0 16px; }
+main { max-width: 760px; margin: 0 auto; padding: 24px 16px 64px; }
+nav { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 48px; }
+nav .links { display: flex; gap: 20px; }
+nav a { color: var(--muted); text-decoration: none; }
+nav a:hover { color: var(--accent); }
+h1 { font-size: 2.6rem; line-height: 1.15; margin: 0 0 16px; }
+h2 { font-size: 1.6rem; margin: 0 0 16px; }
+h3 { font-size: 1.15rem; margin: 0 0 6px; }
 p { margin: 0 0 16px; }
-.brand { color: var(--accent); font-weight: bold; letter-spacing: 0.04em; margin-bottom: 32px; }
-.lead { color: var(--muted); font-size: 1.15rem; }
+section { margin-top: 64px; }
+.brand { color: var(--accent); font-weight: bold; letter-spacing: 0.04em; text-decoration: none; }
+.lead { color: var(--muted); font-size: 1.2rem; }
+.muted { color: var(--muted); }
+.actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 24px; }
 .card {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 12px;
   padding: 24px;
-  margin-top: 24px;
 }
+.grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+.grid .card p { margin: 0; color: var(--muted); }
+.num { color: var(--accent); font-weight: bold; }
 .options { display: grid; gap: 10px; }
-button { font: inherit; cursor: pointer; }
+button, .button { font: inherit; cursor: pointer; }
 .option {
   background: var(--bg);
   color: var(--text);
@@ -47,28 +57,107 @@ button { font: inherit; cursor: pointer; }
   text-align: left;
 }
 .option:hover, .option:focus-visible { border-color: var(--accent); }
-.primary {
-  background: var(--accent);
-  color: var(--accent-text);
-  border: 0;
+.primary, .secondary {
+  display: inline-block;
   border-radius: 8px;
   padding: 12px 20px;
+  text-decoration: none;
 }
+.primary { background: var(--accent); color: var(--accent-text); border: 1px solid var(--accent); }
+.secondary { background: transparent; color: var(--accent); border: 1px solid var(--accent); }
+.primary:disabled { opacity: 0.55; cursor: not-allowed; }
 .step { color: var(--muted); font-size: 0.9rem; margin-bottom: 8px; }
 .result { border-top: 1px solid var(--border); padding: 16px 0; }
 .result:first-of-type { border-top: 0; padding-top: 0; }
 .result h3 { margin: 0; font-size: 1.1rem; }
 .notes { color: var(--muted); margin: 4px 0 0; }
-footer { color: var(--muted); font-size: 0.9rem; margin-top: 40px; }
+.plan h3 { font-size: 1.3rem; }
+.price { font-size: 2rem; font-weight: bold; margin: 8px 0 16px; }
+.price span { font-size: 1rem; font-weight: normal; color: var(--muted); }
+.plan ul { padding-left: 20px; margin: 0 0 24px; }
+.plan li { margin-bottom: 6px; }
+.plan.featured { border: 2px solid var(--accent); }
+.tag { display: inline-block; background: var(--accent); color: var(--accent-text); font-size: 0.8rem; border-radius: 999px; padding: 2px 10px; margin-bottom: 8px; }
+footer { color: var(--muted); font-size: 0.9rem; margin-top: 64px; border-top: 1px solid var(--border); padding-top: 24px; }
+@media (max-width: 520px) {
+  h1 { font-size: 2rem; }
+  nav .links { gap: 12px; font-size: 0.95rem; }
+}
 </style>
 </head>
 <body>
 <main>
-  <div class="brand">Fragrance Finder</div>
-  <h1>Find a scent that fits you.</h1>
-  <p class="lead">Answer three quick questions and get colognes and perfumes matched to what you like.</p>
-  <section class="card" id="quiz" aria-live="polite"></section>
-  <footer>Built by Chris Karavas for an entrepreneurship class project.</footer>
+  <nav>
+    <a class="brand" href="/">Fragrance Finder</a>
+    <div class="links">
+      <a href="#how">How it works</a>
+      <a href="#pricing">Pricing</a>
+    </div>
+  </nav>
+
+  <header>
+    <h1>Stop blind-buying perfume.</h1>
+    <p class="lead">Fragrance Finder is your personal scent advisor. Tell it what you like, and it matches you with colognes and perfumes you'll actually love, and explains why, before you spend $100 on a bottle.</p>
+    <div class="actions">
+      <a class="primary" href="#quiz">Take the free quiz</a>
+      <a class="secondary" href="#pricing">See Premium</a>
+    </div>
+  </header>
+
+  <section id="who">
+    <h2>Who it's for</h2>
+    <div class="grid">
+      <div class="card"><h3>New to fragrance</h3><p>You walk into a store, smell twenty bottles, and leave confused. We give you a short list to start with.</p></div>
+      <div class="card"><h3>Gift shoppers</h3><p>Buying for a partner, parent or friend? Describe them and get picks that fit their style.</p></div>
+      <div class="card"><h3>Collectors</h3><p>You know what you love. Find your next signature scent, or a cheaper alternative to one you already wear.</p></div>
+    </div>
+  </section>
+
+  <section id="how">
+    <h2>How it works</h2>
+    <div class="grid">
+      <div class="card"><p><span class="num">1.</span> Tell us the scents, moods and occasions you like, or the fragrances you already wear.</p></div>
+      <div class="card"><p><span class="num">2.</span> Get matches from the fragrances that fit your taste, with the key notes in each.</p></div>
+      <div class="card"><p><span class="num">3.</span> Try samples of your top picks, then buy the full bottle with confidence.</p></div>
+    </div>
+  </section>
+
+  <section id="quiz-section">
+    <h2>Try it free</h2>
+    <p class="muted">Three questions, about thirty seconds.</p>
+    <div class="card" id="quiz" aria-live="polite"></div>
+  </section>
+
+  <section id="pricing">
+    <h2>Why it's worth paying for</h2>
+    <p class="muted">A full bottle of designer fragrance costs $80 to $200. Most people own at least one they never wear. Avoiding a single bad blind buy pays for a year of Premium.</p>
+    <div class="grid">
+      <div class="card plan">
+        <h3>Free</h3>
+        <div class="price">$0</div>
+        <ul>
+          <li>Three-question scent quiz</li>
+          <li>Top 3 matches from our starter list</li>
+        </ul>
+        <a class="secondary" href="#quiz">Take the quiz</a>
+      </div>
+      <div class="card plan featured">
+        <div class="tag">Most popular</div>
+        <h3>Premium</h3>
+        <div class="price">$5 <span>/ month</span></div>
+        <ul>
+          <li>AI scent advisor: describe what you like in your own words</li>
+          <li>Personalized picks with an explanation for each one</li>
+          <li>Cheaper alternatives to fragrances you love</li>
+          <li>Gift recommendations for someone else</li>
+          <li>Save your profile and come back anytime</li>
+        </ul>
+        <button class="primary" disabled>Coming soon</button>
+      </div>
+    </div>
+  </section>
+
+  <footer>Fragrance Finder, built by Chris Karavas for an entrepreneurship class project.</footer>
 </main>
 <script>
 const questions = [
@@ -146,9 +235,10 @@ function showResults() {
     result.append(element("h3", "", `${match.name} by ${match.brand}`), element("p", "notes", `Notes: ${match.notes}`));
     quiz.append(result);
   });
+  const p = element("p", "muted", "Want picks from far more fragrances, explained for you? Premium's AI advisor is coming soon.");
   const again = element("button", "primary", "Start over");
   again.addEventListener("click", showStart);
-  quiz.append(again);
+  quiz.append(p, again);
 }
 
 showStart();
