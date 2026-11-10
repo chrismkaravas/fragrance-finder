@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>My account · Fragrance Finder</title>
+<style>
+:root {
+  --bg: #faf6f0;
+  --surface: #ffffff;
+  --text: #2b2320;
+  --muted: #6f625a;
+  --accent: #8a4b2d;
+  --accent-text: #ffffff;
+  --border: #e4d9cd;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text); font-family: Georgia, "Times New Roman", serif; line-height: 1.6; }
+main { max-width: 560px; margin: 0 auto; padding: 24px 16px 64px; }
+nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 48px; }
+.brand { color: var(--accent); font-weight: bold; letter-spacing: 0.04em; text-decoration: none; }
+h1 { font-size: 2rem; margin: 0 0 8px; }
+p { margin: 0 0 16px; }
+.muted { color: var(--muted); }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 24px; margin-top: 24px; }
+.row { display: flex; justify-content: space-between; gap: 16px; border-top: 1px solid var(--border); padding: 12px 0; }
+.row:first-child { border-top: 0; padding-top: 0; }
+.row span:first-child { color: var(--muted); }
+button { font: inherit; cursor: pointer; }
+.secondary { background: transparent; color: var(--accent); border: 1px solid var(--accent); border-radius: 8px; padding: 8px 16px; }
+.primary { display: inline-block; background: var(--accent); color: var(--accent-text); border-radius: 8px; padding: 12px 20px; text-decoration: none; }
+[hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<main>
+  <nav>
+    <a class="brand" href="/">Fragrance Finder</a>
+    <button class="secondary" id="logout">Log out</button>
+  </nav>
+  <div id="loading" class="muted">Loading your account…</div>
+  <div id="content" hidden>
+    <h1>My account</h1>
+    <p class="muted">You're logged in. You'll stay logged in on this device for 30 days.</p>
+    <div class="card">
+      <div class="row"><span>Email</span><span id="email"></span></div>
+      <div class="row"><span>Plan</span><span id="plan"></span></div>
+    </div>
+    <p style="margin-top: 24px;"><a class="primary" href="/#quiz">Take the quiz</a></p>
+  </div>
+</main>
+<script>
+fetch("/api/auth")
+  .then(r => r.json())
+  .then(data => {
+    if (!data.user) { location.href = "/login.html"; return; }
+    document.getElementById("email").textContent = data.user.email;
+    document.getElementById("plan").textContent = data.user.isPremium ? "Premium" : "Free";
+    document.getElementById("loading").hidden = true;
+    document.getElementById("content").hidden = false;
+  })
+  .catch(() => { document.getElementById("loading").textContent = "Couldn't load your account. Please refresh."; });
+
+document.getElementById("logout").addEventListener("click", async () => {
+  await fetch("/api/auth", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ action: "logout" })
+  });
+  location.href = "/";
+});
+</script>
+</body>
+</html>

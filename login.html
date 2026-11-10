@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Log in · Fragrance Finder</title>
+<style>
+:root {
+  --bg: #faf6f0;
+  --surface: #ffffff;
+  --text: #2b2320;
+  --muted: #6f625a;
+  --accent: #8a4b2d;
+  --accent-text: #ffffff;
+  --border: #e4d9cd;
+  --error: #a32020;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text); font-family: Georgia, "Times New Roman", serif; line-height: 1.6; }
+main { max-width: 420px; margin: 0 auto; padding: 24px 16px 64px; }
+.brand { display: inline-block; color: var(--accent); font-weight: bold; letter-spacing: 0.04em; text-decoration: none; margin-bottom: 48px; }
+h1 { font-size: 2rem; margin: 0 0 8px; }
+p { margin: 0 0 16px; }
+.muted { color: var(--muted); }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 24px; margin-top: 24px; }
+label { display: block; margin-bottom: 16px; }
+input { display: block; width: 100%; margin-top: 4px; font: inherit; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); color: var(--text); }
+input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+button { font: inherit; cursor: pointer; }
+.primary { width: 100%; background: var(--accent); color: var(--accent-text); border: 0; border-radius: 8px; padding: 12px 20px; }
+.primary:disabled { opacity: 0.6; cursor: wait; }
+.link { background: none; border: 0; padding: 0; color: var(--accent); text-decoration: underline; }
+.error { color: var(--error); min-height: 1.6em; margin: 0 0 12px; }
+</style>
+</head>
+<body>
+<main>
+  <a class="brand" href="/">Fragrance Finder</a>
+  <h1 id="title">Log in</h1>
+  <p class="muted" id="subtitle">Welcome back.</p>
+  <form class="card" id="form">
+    <label>Email<input type="email" name="email" autocomplete="email" required></label>
+    <label>Password<input type="password" name="password" autocomplete="current-password" required minlength="8"></label>
+    <p class="error" id="error" role="alert"></p>
+    <button class="primary" id="submit" type="submit">Log in</button>
+  </form>
+  <p class="muted" style="margin-top: 16px;"><span id="switch-text">New here?</span> <button class="link" id="switch" type="button">Create an account</button></p>
+</main>
+<script>
+const form = document.getElementById("form");
+const error = document.getElementById("error");
+const submit = document.getElementById("submit");
+let mode = new URLSearchParams(location.search).get("mode") === "signup" ? "signup" : "login";
+
+function render() {
+  const signup = mode === "signup";
+  document.getElementById("title").textContent = signup ? "Create your account" : "Log in";
+  document.getElementById("subtitle").textContent = signup ? "Save your scent profile and unlock Premium." : "Welcome back.";
+  submit.textContent = signup ? "Create account" : "Log in";
+  document.getElementById("switch-text").textContent = signup ? "Already have an account?" : "New here?";
+  document.getElementById("switch").textContent = signup ? "Log in" : "Create an account";
+  form.password.autocomplete = signup ? "new-password" : "current-password";
+  error.textContent = "";
+}
+
+document.getElementById("switch").addEventListener("click", () => {
+  mode = mode === "signup" ? "login" : "signup";
+  render();
+});
+
+form.addEventListener("submit", async event => {
+  event.preventDefault();
+  error.textContent = "";
+  submit.disabled = true;
+  try {
+    const response = await fetch("/api/auth", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: mode, email: form.email.value, password: form.password.value })
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "Something went wrong.");
+    location.href = "/account.html";
+  } catch (problem) {
+    error.textContent = problem.message;
+    submit.disabled = false;
+  }
+});
+
+// Already logged in? Skip straight to the account page.
+fetch("/api/auth").then(r => r.json()).then(data => { if (data.user) location.href = "/account.html"; }).catch(() => {});
+
+render();
+</script>
+</body>
+</html>

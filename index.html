@@ -92,6 +92,7 @@ footer { color: var(--muted); font-size: 0.9rem; margin-top: 64px; border-top: 1
     <div class="links">
       <a href="#how">How it works</a>
       <a href="#pricing">Pricing</a>
+      <a href="/login.html" id="account-link">Log in</a>
     </div>
   </nav>
 
@@ -242,6 +243,14 @@ function showResults() {
 }
 
 showStart();
+
+// Swap "Log in" for "My account" when someone is already logged in.
+fetch("/api/auth").then(r => r.json()).then(data => {
+  if (!data.user) return;
+  const link = document.getElementById("account-link");
+  link.textContent = "My account";
+  link.href = "/account.html";
+}).catch(() => {});
 </script>
 </body>
 </html>
