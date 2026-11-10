@@ -117,7 +117,8 @@ form.addEventListener("submit", async event => {
       body: JSON.stringify({ request: input.value })
     });
     const data = await response.json();
-    if (response.status === 401) { location.href = "/login.html"; return; }
+    if (response.status === 401) { location.href = "/login.html?next=/advisor.html"; return; }
+    if (response.status === 402) { showUpgrade(); return; }
     if (!response.ok) throw new Error(data.error || "Something went wrong.");
     showResults(data);
   } catch (problem) {
@@ -129,8 +130,25 @@ form.addEventListener("submit", async event => {
   }
 });
 
-// The advisor is for logged-in members.
-fetch("/api/auth").then(r => r.json()).then(data => { if (!data.user) location.href = "/login.html"; }).catch(() => {});
+function showUpgrade() {
+  const card = element("div", "card");
+  const link = element("a", "primary", "Get Premium for $5/month");
+  link.href = "/account.html";
+  link.style.display = "inline-block";
+  link.style.textDecoration = "none";
+  card.append(
+    element("h2", "", "The scent advisor is part of Premium"),
+    element("p", "muted", "Upgrade to describe what you like in your own words and get picks explained just for you."),
+    link
+  );
+  form.replaceWith(card);
+}
+
+// The advisor is for logged-in Premium members.
+fetch("/api/auth").then(r => r.json()).then(data => {
+  if (!data.user) location.href = "/login.html?next=/advisor.html";
+  else if (!data.user.isPremium) showUpgrade();
+}).catch(() => {});
 </script>
 </body>
 </html>

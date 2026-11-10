@@ -46,6 +46,7 @@ export default async function handler(req, res) {
     await setup();
     const user = await getUser(req);
     if (!user) return res.status(401).json({ error: "Please log in to use the scent advisor." });
+    if (!user.is_premium) return res.status(402).json({ error: "The scent advisor is part of Premium." });
 
     const request = String(req.body?.request || "").trim();
     if (request.length < 5) return res.status(400).json({ error: "Tell us a little about what you like first." });

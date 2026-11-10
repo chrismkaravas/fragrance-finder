@@ -28,7 +28,10 @@ p { margin: 0 0 16px; }
 .row span:first-child { color: var(--muted); }
 button { font: inherit; cursor: pointer; }
 .secondary { background: transparent; color: var(--accent); border: 1px solid var(--accent); border-radius: 8px; padding: 8px 16px; }
-.primary { display: inline-block; background: var(--accent); color: var(--accent-text); border-radius: 8px; padding: 12px 20px; text-decoration: none; }
+.primary { display: inline-block; background: var(--accent); color: var(--accent-text); border: 0; border-radius: 8px; padding: 12px 20px; text-decoration: none; }
+.primary:disabled { opacity: 0.6; cursor: wait; }
+.error { color: #a32020; margin: 12px 0 0; }
+.notice { background: #e6f2e6; border-radius: 8px; padding: 12px 16px; margin-top: 16px; }
 [hidden] { display: none !important; }
 </style>
 </head>
@@ -46,20 +49,74 @@ button { font: inherit; cursor: pointer; }
       <div class="row"><span>Email</span><span id="email"></span></div>
       <div class="row"><span>Plan</span><span id="plan"></span></div>
     </div>
-    <p style="margin-top: 24px;"><a class="primary" href="/advisor.html">Open the scent advisor</a></p>
+    <div class="card" id="upgrade" hidden>
+      <h2 style="margin: 0 0 8px;">Get Premium: $5/month</h2>
+      <p class="muted">Unlock the AI scent advisor: describe what you like in your own words and get picks explained just for you, cheaper alternatives, and gift ideas.</p>
+      <button class="primary" id="checkout">Upgrade with Stripe</button>
+      <p class="error" id="error" role="alert"></p>
+    </div>
+    <p style="margin-top: 24px;" id="advisor-link" hidden><a class="primary" href="/advisor.html">Open the scent advisor</a></p>
   </div>
 </main>
 <script>
-fetch("/api/auth")
-  .then(r => r.json())
-  .then(data => {
-    if (!data.user) { location.href = "/login.html"; return; }
-    document.getElementById("email").textContent = data.user.email;
-    document.getElementById("plan").textContent = data.user.isPremium ? "Premium" : "Free";
-    document.getElementById("loading").hidden = true;
-    document.getElementById("content").hidden = false;
-  })
-  .catch(() => { document.getElementById("loading").textContent = "Couldn't load your account. Please refresh."; });
+const error = document.getElementById("error");
+
+async function post(url, body) {
+  const response = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body)
+  });
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.error || "Something went wrong.");
+  return data;
+}
+
+function show(user, justUpgraded) {
+  document.getElementById("email").textContent = user.email;
+  document.getElementById("plan").textContent = user.isPremium ? "Premium" : "Free";
+  document.getElementById("upgrade").hidden = user.isPremium;
+  document.getElementById("advisor-link").hidden = !user.isPremium;
+  if (justUpgraded) {
+    const notice = document.createElement("p");
+    notice.className = "notice";
+    notice.textContent = "Payment received. Welcome to Premium!";
+    document.querySelector("#content .card").before(notice);
+  }
+  document.getElementById("loading").hidden = true;
+  document.getElementById("content").hidden = false;
+}
+
+async function load() {
+  try {
+    let { user } = await fetch("/api/auth").then(r => r.json());
+    if (!user) { location.href = "/login.html?next=/account.html"; return; }
+    // Coming back from Stripe Checkout: confirm the payment, then tidy the address bar.
+    const sessionId = new URLSearchParams(location.search).get("session_id");
+    if (sessionId && !user.isPremium) {
+      user = (await post("/api/billing", { action: "confirm", sessionId })).user;
+      history.replaceState(null, "", "/account.html");
+      show(user, true);
+      return;
+    }
+    show(user, false);
+  } catch (problem) {
+    document.getElementById("loading").textContent = problem.message || "Couldn't load your account. Please refresh.";
+  }
+}
+
+document.getElementById("checkout").addEventListener("click", async event => {
+  event.target.disabled = true;
+  error.textContent = "";
+  try {
+    location.href = (await post("/api/billing", { action: "checkout" })).url;
+  } catch (problem) {
+    error.textContent = problem.message;
+    event.target.disabled = false;
+  }
+});
+
+load();
 
 document.getElementById("logout").addEventListener("click", async () => {
   await fetch("/api/auth", {

@@ -50,7 +50,10 @@ button { font: inherit; cursor: pointer; }
 const form = document.getElementById("form");
 const error = document.getElementById("error");
 const submit = document.getElementById("submit");
-let mode = new URLSearchParams(location.search).get("mode") === "signup" ? "signup" : "login";
+const params = new URLSearchParams(location.search);
+let mode = params.get("mode") === "signup" ? "signup" : "login";
+// Only follow same-site paths, so the link can't send people to another website.
+const next = /^\/[\w\-.]*$/.test(params.get("next") || "") ? params.get("next") : "/advisor.html";
 
 function render() {
   const signup = mode === "signup";
@@ -80,7 +83,7 @@ form.addEventListener("submit", async event => {
     });
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || "Something went wrong.");
-    location.href = "/advisor.html";
+    location.href = next;
   } catch (problem) {
     error.textContent = problem.message;
     submit.disabled = false;
@@ -88,7 +91,7 @@ form.addEventListener("submit", async event => {
 });
 
 // Already logged in? Skip straight to the account page.
-fetch("/api/auth").then(r => r.json()).then(data => { if (data.user) location.href = "/account.html"; }).catch(() => {});
+fetch("/api/auth").then(r => r.json()).then(data => { if (data.user) location.href = next; }).catch(() => {});
 
 render();
 </script>
