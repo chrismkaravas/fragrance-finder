@@ -12,7 +12,7 @@ Recommend 4 real, currently sold fragrances that fit. Where it fits their budget
 For each pick, explain in one or two plain sentences why it matches what they said, using their own words where you can.
 Budget is a hard rule: if they name a price limit, or ask for something cheaper than a fragrance they mention, every pick must cost less than that. Good affordable houses include Zara, Montblanc, Nautica, Armaf, Lattafa, Rasasi and Al Haramain.
 If they mention a fragrance they love but don't ask for cheaper, include at least one cheaper alternative with a similar feel, and don't recommend the fragrance they already own.
-Price ranges are rough US retail for a full bottle, like "$80-$120". Never invent fragrances. If the request isn't about fragrance, set summary to a short friendly note asking them to describe scents they like, and return an empty picks list.`;
+Price ranges are rough US retail for a full bottle, like "$80-$120". Only recommend fragrances you are confident exist under that exact name and brand; never invent one. Before answering, check each pick's price against their budget and swap out any that don't fit. If the request isn't about fragrance, set summary to a short friendly note asking them to describe scents they like, and return an empty picks list.`;
 
 const SCHEMA = {
   type: "object",
@@ -59,10 +59,10 @@ export default async function handler(req, res) {
     await sql`INSERT INTO ai_requests (user_id) VALUES (${user.id})`;
 
     const response = await client.messages.create({
-      model: "claude-haiku-5-5",
-      max_tokens: 4000,
+      model: "claude-sonnet-5-5",
+      max_tokens: 16000,
       system: SYSTEM,
-      output_config: { effort: "low", format: { type: "json_schema", schema: SCHEMA } },
+      output_config: { effort: "medium", format: { type: "json_schema", schema: SCHEMA } },
       messages: [{ role: "user", content: request }]
     });
 
