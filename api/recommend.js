@@ -12,13 +12,11 @@ Recommend 4 real, currently sold fragrances that fit. Where it fits their budget
 For each pick, explain in one or two plain sentences why it matches what they said, using their own words where you can.
 Budget is a hard rule: if they name a price limit, or ask for something cheaper than a fragrance they mention, every pick must cost less than that. Good affordable houses include Zara, Montblanc, Nautica, Armaf, Lattafa, Rasasi and Al Haramain.
 If they mention a fragrance they love but don't ask for cheaper, include at least one cheaper alternative with a similar feel, and don't recommend the fragrance they already own.
-Price ranges are rough US retail for a full bottle, like "$80-$120". Only recommend fragrances you are confident exist under that exact name and brand; never invent one. Before answering, check each pick's price against their budget and swap out any that don't fit. If the request isn't about fragrance, set summary to a short friendly note asking them to describe scents they like, and return an empty picks list.`;
+Price ranges are rough US retail for a full bottle, like "$80-$120". Only recommend fragrances you are confident exist under that exact name and brand; never invent one. Before answering, confirm each pick exists, check its price against their budget, and swap out any that don't fit. Every field in your answer must be complete and written for the customer. If the request isn't about fragrance, set summary to a short friendly note asking them to describe scents they like, and return an empty picks list.`;
 
 const SCHEMA = {
   type: "object",
   properties: {
-    // Filled in first, so the model plans and checks its picks before writing them. Never shown to the user.
-    checks: { type: "string", description: "Scratch work: list 6-8 candidates, confirm each exists under that exact name and brand, check each price against the budget, then choose the final 4. Every pick below must be complete and final." },
     summary: { type: "string", description: "One or two sentences restating what they're looking for." },
     picks: {
       type: "array",
@@ -38,7 +36,7 @@ const SCHEMA = {
     },
     tip: { type: "string", description: "One practical tip, such as how to sample before buying." }
   },
-  required: ["checks", "summary", "picks", "tip"],
+  required: ["summary", "picks", "tip"],
   additionalProperties: false
 };
 
@@ -70,14 +68,14 @@ export default async function handler(req, res) {
     });
 
     if (response.stop_reason === "refusal") {
+      console.error("Refusal:", response.stop_details?.category, response.stop_details?.explanation);
       return res.status(422).json({ error: "The advisor couldn't help with that. Try describing scents you like." });
     }
     const text = response.content.find(block => block.type === "text")?.text;
     if (response.stop_reason === "max_tokens" || !text) {
       return res.status(502).json({ error: "The advisor's answer got cut off. Please try again." });
     }
-    const { checks, ...answer } = JSON.parse(text);
-    return res.json(answer);
+    return res.json(JSON.parse(text));
   } catch (error) {
     console.error(error);
     if (error instanceof Anthropic.RateLimitError) {
