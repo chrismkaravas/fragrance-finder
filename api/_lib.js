@@ -23,6 +23,11 @@ export function setup() {
         user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
         expires_at TIMESTAMPTZ NOT NULL
       )`;
+      await sql`CREATE TABLE IF NOT EXISTS ai_requests (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      )`;
     })().catch(error => { ready = null; throw error; });
   }
   return ready;

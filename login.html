@@ -80,7 +80,7 @@ form.addEventListener("submit", async event => {
     });
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || "Something went wrong.");
-    location.href = "/account.html";
+    location.href = "/advisor.html";
   } catch (problem) {
     error.textContent = problem.message;
     submit.disabled = false;

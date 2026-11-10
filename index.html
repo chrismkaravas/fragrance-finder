@@ -236,7 +236,10 @@ function showResults() {
     result.append(element("h3", "", `${match.name} by ${match.brand}`), element("p", "notes", `Notes: ${match.notes}`));
     quiz.append(result);
   });
-  const p = element("p", "muted", "Want picks from far more fragrances, explained for you? Premium's AI advisor is coming soon.");
+  const p = element("p", "muted", "Want picks from far more fragrances, explained for you? ");
+  const advisor = element("a", "", "Try the AI scent advisor.");
+  advisor.href = "/advisor.html";
+  p.append(advisor);
   const again = element("button", "primary", "Start over");
   again.addEventListener("click", showStart);
   quiz.append(p, again);

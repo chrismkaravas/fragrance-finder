@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Scent advisor · Fragrance Finder</title>
+<style>
+:root {
+  --bg: #faf6f0;
+  --surface: #ffffff;
+  --text: #2b2320;
+  --muted: #6f625a;
+  --accent: #8a4b2d;
+  --accent-text: #ffffff;
+  --border: #e4d9cd;
+  --chip: #f1e7dc;
+  --error: #a32020;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text); font-family: Georgia, "Times New Roman", serif; line-height: 1.6; }
+main { max-width: 680px; margin: 0 auto; padding: 24px 16px 64px; }
+nav { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 40px; }
+nav a { color: var(--muted); text-decoration: none; }
+.brand { color: var(--accent) !important; font-weight: bold; letter-spacing: 0.04em; }
+h1 { font-size: 2rem; margin: 0 0 8px; }
+h2 { font-size: 1.3rem; margin: 0 0 8px; }
+p { margin: 0 0 16px; }
+.muted { color: var(--muted); }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 24px; margin-top: 24px; }
+textarea { display: block; width: 100%; min-height: 120px; font: inherit; padding: 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); color: var(--text); resize: vertical; }
+textarea:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+button { font: inherit; cursor: pointer; }
+.primary { background: var(--accent); color: var(--accent-text); border: 0; border-radius: 8px; padding: 12px 20px; margin-top: 16px; }
+.primary:disabled { opacity: 0.6; cursor: wait; }
+.examples { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.example { background: var(--chip); color: var(--text); border: 0; border-radius: 999px; padding: 6px 12px; font-size: 0.9rem; text-align: left; }
+.example:hover { background: var(--border); }
+.error { color: var(--error); margin: 12px 0 0; }
+.pick { border-top: 1px solid var(--border); padding: 20px 0; }
+.pick:first-of-type { border-top: 0; padding-top: 0; }
+.pick h3 { margin: 0; font-size: 1.15rem; }
+.meta { color: var(--muted); font-size: 0.9rem; margin: 2px 0 8px; }
+.notes { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 0; padding: 0; list-style: none; }
+.notes li { background: var(--chip); border-radius: 999px; padding: 2px 10px; font-size: 0.85rem; }
+.tip { background: var(--chip); border-radius: 8px; padding: 12px 16px; margin: 8px 0 0; }
+[hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<main>
+  <nav>
+    <a class="brand" href="/">Fragrance Finder</a>
+    <a href="/account.html">My account</a>
+  </nav>
+  <h1>Your scent advisor</h1>
+  <p class="muted">Describe what you like in your own words: scents, fragrances you already wear, who it's for, your budget.</p>
+
+  <form class="card" id="form">
+    <textarea id="request" maxlength="1500" placeholder="I love the smell of fresh laundry and the beach, nothing too sweet. Something for work, under $100." required></textarea>
+    <div class="examples" id="examples">
+      <button type="button" class="example">I wear Bleu de Chanel but want something cheaper that smells similar</button>
+      <button type="button" class="example">A gift for my mom, she likes roses and soft, elegant scents, around $100</button>
+      <button type="button" class="example">Warm and cozy for fall evenings, like vanilla, wood and a little smoke</button>
+    </div>
+    <button class="primary" id="submit" type="submit">Find my fragrances</button>
+    <p class="error" id="error" role="alert" hidden></p>
+  </form>
+
+  <section class="card" id="results" aria-live="polite" hidden></section>
+</main>
+<script>
+const form = document.getElementById("form");
+const input = document.getElementById("request");
+const submit = document.getElementById("submit");
+const error = document.getElementById("error");
+const results = document.getElementById("results");
+
+function element(tag, className, text) {
+  const node = document.createElement(tag);
+  if (className) node.className = className;
+  if (text) node.textContent = text;
+  return node;
+}
+
+document.getElementById("examples").addEventListener("click", event => {
+  if (event.target.classList.contains("example")) input.value = event.target.textContent;
+});
+
+function showResults(data) {
+  results.replaceChildren(element("h2", "", "Your picks"), element("p", "muted", data.summary));
+  data.picks.forEach(pick => {
+    const item = element("div", "pick");
+    const notes = element("ul", "notes");
+    pick.key_notes.forEach(note => notes.append(element("li", "", note)));
+    item.append(
+      element("h3", "", `${pick.name} by ${pick.brand}`),
+      element("p", "meta", `${pick.price_range} · ${pick.best_for}`),
+      element("p", "", pick.why),
+      notes
+    );
+    results.append(item);
+  });
+  if (data.tip) results.append(element("p", "tip", `Tip: ${data.tip}`));
+  results.hidden = false;
+  results.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+form.addEventListener("submit", async event => {
+  event.preventDefault();
+  error.hidden = true;
+  submit.disabled = true;
+  submit.textContent = "Finding your matches…";
+  try {
+    const response = await fetch("/api/recommend", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ request: input.value })
+    });
+    const data = await response.json();
+    if (response.status === 401) { location.href = "/login.html"; return; }
+    if (!response.ok) throw new Error(data.error || "Something went wrong.");
+    showResults(data);
+  } catch (problem) {
+    error.textContent = problem.message;
+    error.hidden = false;
+  } finally {
+    submit.disabled = false;
+    submit.textContent = "Find my fragrances";
+  }
+});
+
+// The advisor is for logged-in members.
+fetch("/api/auth").then(r => r.json()).then(data => { if (!data.user) location.href = "/login.html"; }).catch(() => {});
+</script>
+</body>
+</html>
